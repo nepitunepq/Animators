@@ -1,27 +1,33 @@
-# daisy/generate_comparison.py
+# generate_comparison.py
 # รันบน Colab A100 หลัง training เสร็จ
 
 import torch
 import subprocess
 from pathlib import Path
+
+from config import (
+    MODEL_DIR,
+    LORA_OUTPUT,
+    REFERENCE_IMAGE,
+    FINAL_OUTPUT,
+    PROMPT,
+    NUM_FRAMES,
+    GUIDANCE_SCALE,
+    INFERENCE_STEPS,
+    LORA_SCALE,
+    SEED,
+    VIDEO_A,
+    VIDEO_B,
+    VIDEO_C,
+    COMPARISON_OUT,
+)
+
 from diffusers import WanImageToVideoPipeline
 from diffusers.utils import load_image, export_to_video
 
-# ===== CONFIG =====
-MODEL_DIR    = "./models/wan2.2"
-LORA_WEIGHTS = "./lora_output/checkpoint-1500"
-INPUT_IMAGE  = "./shared/reference_object.jpg"  # รูป object เดียวกับ Blender
-OUTPUT_DIR   = "./shared/outputs"
-NUM_FRAMES   = 81    # ~3 วินาที @ 24fps
-PROMPT = (
-    "A 3D object rotating 360 degrees, "
-    "smooth constant angular velocity orbital camera, "
-    "mathematically perfect rotation, "
-    "studio lighting, white background, no jitter"
-)
-# ==================
+LORA_WEIGHTS = str(Path(LORA_OUTPUT) / f"checkpoint-{1500}")
 
-Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+Path(FINAL_OUTPUT).mkdir(parents=True, exist_ok=True)
 
 def load_pipe(use_lora=False):
     print(f"Loading {'trained' if use_lora else 'vanilla'} model...")
@@ -31,33 +37,34 @@ def load_pipe(use_lora=False):
     )
     if use_lora:
         pipe.load_lora_weights(LORA_WEIGHTS)
-        print(f"  LoRA loaded from: {LORA_WEIGHTS}")
+        print(f"  LoRA loaded: {LORA_WEIGHTS}")
     pipe.enable_model_cpu_offload()
     pipe.vae.enable_tiling()
     return pipe
 
-def generate(pipe, output_name, seed=42):
-    image = load_image(INPUT_IMAGE).resize((832, 480))
-    print(f"Generating {output_name}...")
+def generate(pipe, output_path):
+    image = load_image(REFERENCE_IMAGE).resize((832, 480))
+    print(f"Generating {Path(output_path).name}...")
     out = pipe(
         image=image,
         prompt=PROMPT,
         num_frames=NUM_FRAMES,
-        guidance_scale=5.0,
-        num_inference_steps=25,
-        generator=torch.Generator().manual_seed(seed),
+        guidance_scale=GUIDANCE_SCALE,
+        num_inference_steps=INFERENCE_STEPS,
+        generator=torch.Generator().manual_seed(SEED),
     ).frames[0]
-    path = f"{OUTPUT_DIR}/{output_name}"
-    export_to_video(out, path, fps=24)
-    print(f"Saved: {path} ✓")
-    return path
+    export_to_video(out, output_path, fps=24)
+    print(f"Saved: {output_path} ✓")
+    return output_path
 
-def make_comparison(path_a, path_b, path_c):
+def make_comparison():
     """ต่อ 3 videos เป็น side-by-side"""
-    out = f"{OUTPUT_DIR}/comparison_final.mp4"
+    print("Creating 3-screen comparison...")
     cmd = [
         "ffmpeg",
-        "-i", path_a, "-i", path_b, "-i", path_c,
+        "-i", VIDEO_A,
+        "-i", VIDEO_B,
+        "-i", VIDEO_C,
         "-filter_complex",
         (
             "[0:v]scale=640:480,"
@@ -79,26 +86,26 @@ def make_comparison(path_a, path_b, path_c):
         ),
         "-map", "[out]",
         "-c:v", "libx264", "-crf", "18",
-        "-y", out
+        "-y", COMPARISON_OUT
     ]
     subprocess.run(cmd, check=True)
-    print(f"Saved: {out} ✓")
+    print(f"Saved: {COMPARISON_OUT} ✓")
 
 if __name__ == "__main__":
-    # Video B — trained
+    # Video B — trained LoRA
     pipe_B = load_pipe(use_lora=True)
-    path_B = generate(pipe_B, "ai_trained_output.mp4")
+    generate(pipe_B, VIDEO_B)
     del pipe_B
 
-    # Video C — vanilla
+    # Video C — vanilla baseline
     pipe_C = load_pipe(use_lora=False)
-    path_C = generate(pipe_C, "ai_vanilla_output.mp4")
+    generate(pipe_C, VIDEO_C)
     del pipe_C
 
     # 3-screen comparison
-    path_A = "./shared/blender_clips/ground_truth_orbit.mp4"
-    make_comparison(path_A, path_B, path_C)
-    print("\nAll done! Files ready:")
-    print(f"  {path_B}")
-    print(f"  {path_C}")
-    print(f"  {OUTPUT_DIR}/comparison_final.mp4")
+    make_comparison()
+
+    print("\nAll done!")
+    print(f"  B : {VIDEO_B}")
+    print(f"  C : {VIDEO_C}")
+    print(f"  Comparison : {COMPARISON_OUT}")

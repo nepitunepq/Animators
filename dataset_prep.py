@@ -1,4 +1,4 @@
-# daisy/dataset_prep.py
+# dataset_prep.py
 # รันหลังได้ clips จาก Yoshi
 # ตอนนี้แค่เขียนให้เสร็จก่อน ยังไม่ต้องรัน
 
@@ -8,14 +8,14 @@ import subprocess
 from pathlib import Path
 from tqdm import tqdm
 
-# ===== CONFIG — แก้ตรงนี้อย่างเดียวเมื่อได้ clips =====
-INPUT_CLIPS_DIR = "./shared/blender_clips"   # Yoshi จะส่ง clips มาไว้ที่นี่
-OUTPUT_DIR      = "./shared/wan_dataset"
-TARGET_W        = 832
-TARGET_H        = 480
-OBJECT_NAME     = "bunny"
-FPS             = 24
-# ======================================================
+from config import (
+    BLENDER_CLIPS,
+    DATASET_DIR,
+    TARGET_W,
+    TARGET_H,
+    OBJECT_NAME,
+    FPS,
+)
 
 def resize_video(src, dst, w, h):
     """Resize video ให้ตรง resolution ที่ Wan 2.2 ต้องการ"""
@@ -58,16 +58,16 @@ def flip_video(src, dst):
     subprocess.run(cmd, capture_output=True)
 
 def prepare_dataset():
-    videos_dir   = Path(OUTPUT_DIR) / "videos"
-    captions_dir = Path(OUTPUT_DIR) / "captions"
+    videos_dir   = Path(DATASET_DIR) / "videos"
+    captions_dir = Path(DATASET_DIR) / "captions"
     videos_dir.mkdir(parents=True, exist_ok=True)
     captions_dir.mkdir(parents=True, exist_ok=True)
 
-    clips = list(Path(INPUT_CLIPS_DIR).glob("*.mp4"))
+    clips = list(Path(BLENDER_CLIPS).glob("*.mp4"))
 
     if not clips:
         print("ยังไม่มี clips — รอ Yoshi ส่งมาก่อน")
-        print(f"วาง clips ไว้ที่: {INPUT_CLIPS_DIR}")
+        print(f"วาง clips ไว้ที่: {BLENDER_CLIPS}")
         return
 
     print(f"Found {len(clips)} clips — processing...")
@@ -95,13 +95,13 @@ def prepare_dataset():
         })
 
     # 4. Save manifest
-    (Path(OUTPUT_DIR) / "manifest.json").write_text(
+    (Path(DATASET_DIR) / "manifest.json").write_text(
         json.dumps(manifest, indent=2)
     )
 
     total = len(list(videos_dir.glob("*.mp4")))
     print(f"\nDone! {total} videos ready")
-    print(f"Saved to: {OUTPUT_DIR}")
+    print(f"Saved to: {DATASET_DIR}")
 
 if __name__ == "__main__":
     prepare_dataset()

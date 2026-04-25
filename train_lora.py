@@ -1,4 +1,4 @@
-# daisy/train_lora.py
+# train_lora.py
 # รันบน Colab A100 หลัง dataset พร้อม
 
 import os
@@ -6,24 +6,29 @@ import json
 import subprocess
 from pathlib import Path
 
-# ===== CONFIG =====
-MODEL_DIR    = "./models/wan2.2"
-DATASET_DIR  = "./shared/wan_dataset/videos"
-CAPTION_DIR  = "./shared/wan_dataset/captions"
-OUTPUT_DIR   = "./lora_output"
-LORA_RANK    = 16
-LORA_ALPHA   = 16
-LR           = 1e-4
-MAX_STEPS    = 1500
-BATCH_SIZE   = 1
-GRAD_ACCUM   = 4
-SAVE_EVERY   = 250
-SEED         = 42
-# ==================
+from config import (
+    MODEL_DIR,
+    DATASET_DIR,
+    LORA_OUTPUT,
+    LORA_RANK,
+    LORA_ALPHA,
+    LEARNING_RATE,
+    MAX_STEPS,
+    BATCH_SIZE,
+    GRAD_ACCUM,
+    SAVE_EVERY,
+    SEED,
+    TARGET_W,
+    TARGET_H,
+    NUM_FRAMES,
+)
+
+CAPTION_DIR = os.path.join(DATASET_DIR, "captions")
+VIDEO_DIR   = os.path.join(DATASET_DIR, "videos")
 
 def check_dataset():
     """เช็คว่า dataset พร้อมก่อน train"""
-    videos   = list(Path(DATASET_DIR).glob("*.mp4"))
+    videos   = list(Path(VIDEO_DIR).glob("*.mp4"))
     captions = list(Path(CAPTION_DIR).glob("*.txt"))
 
     print("=" * 40)
@@ -47,19 +52,19 @@ def save_config():
     """Save config เป็น JSON"""
     config = {
         "model_dir"   : MODEL_DIR,
-        "dataset_dir" : DATASET_DIR,
+        "dataset_dir" : VIDEO_DIR,
         "caption_dir" : CAPTION_DIR,
-        "output_dir"  : OUTPUT_DIR,
+        "output_dir"  : LORA_OUTPUT,
         "lora_rank"   : LORA_RANK,
         "lora_alpha"  : LORA_ALPHA,
-        "lr"          : LR,
+        "lr"          : LEARNING_RATE,
         "max_steps"   : MAX_STEPS,
         "batch_size"  : BATCH_SIZE,
         "grad_accum"  : GRAD_ACCUM,
         "save_every"  : SAVE_EVERY,
         "seed"        : SEED,
-        "resolution"  : [832, 480],
-        "num_frames"  : 81,
+        "resolution"  : [TARGET_W, TARGET_H],
+        "num_frames"  : NUM_FRAMES,
     }
     Path("lora_config.json").write_text(json.dumps(config, indent=2))
     print("Config saved to lora_config.json ✓")
@@ -99,7 +104,7 @@ def download_model():
 
 def run_training(config):
     """Run LoRA training"""
-    Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+    Path(LORA_OUTPUT).mkdir(parents=True, exist_ok=True)
 
     cmd = [
         "python", "diffusion-pipe/train.py",
@@ -115,7 +120,7 @@ def run_training(config):
         "--grad_accum",  str(config["grad_accum"]),
         "--save_every",  str(config["save_every"]),
         "--seed",        str(config["seed"]),
-        "--resolution",  "832x480",
+        "--resolution",  f"{TARGET_W}x{TARGET_H}",
         "--num_frames",  str(config["num_frames"]),
     ]
 
@@ -131,7 +136,7 @@ def monitor_loss():
     import glob
     import matplotlib.pyplot as plt
 
-    log_files = sorted(glob.glob(f"{OUTPUT_DIR}/logs/*.jsonl"))
+    log_files = sorted(glob.glob(f"{LORA_OUTPUT}/logs/*.jsonl"))
     if not log_files:
         print("No logs yet — training ยังไม่เริ่ม")
         return
@@ -163,25 +168,15 @@ if __name__ == "__main__":
     print("  Daisy — LoRA Training Pipeline")
     print("=" * 40)
 
-    # 1. เช็ค dataset
     if not check_dataset():
         print("หยุดก่อน — รอ clips จาก Yoshi แล้วรัน dataset_prep.py ก่อน")
         exit()
 
-    # 2. Save config
     config = save_config()
-
-    # 3. Setup trainer
     setup_trainer()
-
-    # 4. Download model
     download_model()
-
-    # 5. Train
     run_training(config)
-
-    # 6. Plot loss
     monitor_loss()
 
     print("\nTraining complete!")
-    print(f"LoRA weights saved to: {OUTPUT_DIR}/")
+    print(f"LoRA weights saved to: {LORA_OUTPUT}/")
