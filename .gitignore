@@ -79,3 +79,6 @@ desktop.ini
 
 # diffusion-pipe (clone แยก ไม่ต้อง push)
 diffusion-pipe/
+
+# Blender render output
+camera_output/
