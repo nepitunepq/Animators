@@ -1,0 +1,81 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# Conda
+.conda/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Models (ใหญ่มาก ไม่ควร push)
+models/
+*.safetensors
+*.ckpt
+*.pt
+*.bin
+*.pth
+
+# LoRA outputs
+lora_output/
+checkpoints/
+
+# Dataset (ไฟล์ใหญ่ ไม่ควร push)
+shared/blender_clips/
+shared/wan_dataset/
+shared/outputs/
+wan_dataset/
+blender_clips/
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Image outputs
+*.png
+*.jpg
+*.jpeg
+renders/
+clips/
+variations/
+
+# Logs
+logs/
+*.log
+*.jsonl
+loss_curve.png
+
+# Config secrets
+.env
+secrets.json
+api_keys.txt
+
+# Mac
+.DS_Store
+.AppleDouble
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# diffusion-pipe (clone แยก ไม่ต้อง push)
+diffusion-pipe/
