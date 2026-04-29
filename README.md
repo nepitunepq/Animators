@@ -7,9 +7,10 @@
 | คนชื่อ | หน้าที่ | ไฟล์หลัก |
 |---|---|---|
 | Nine | คำนวณ camera path (quaternion + SLERP) | `camera_math.py` |
-| Yoshi | render ฉากด้วย Blender | `blender_render.py` |
-| Daisy | รัน MotionCtrl inference บน Kaggle | `train-with-motionctrl.ipynb` |
+| Yoshi | ช่วย train MotionCtrl (เดิม Blender แต่ไม่ได้ใช้) | `train-with-motionctrl.ipynb` |
+| Daisy | train MotionCtrl inference บน Kaggle | `train-with-motionctrl.ipynb` |
 | Rose | evaluate และ เปรียบเทียบผล | `compare_video.py` |
+| Maimai | documentation | `README.md` |
 
 ---
 
@@ -18,7 +19,6 @@
 | Phase | เครื่องที่ใช้ | GPU |
 |---|---|---|
 | camera math, compare | เครื่องตัวเอง | ไม่จำเป็น |
-| Blender render | เครื่องตัวเอง | CPU ได้ (แต่ช้า) |
 | MotionCtrl inference | Kaggle | GPU 16GB+ |
 
 ---
@@ -61,17 +61,7 @@ python camera_math.py
 
 ---
 
-### Phase 2 — Blender Render (Yoshi)
-```bash
-blender --background --python blender_render.py
-# → renders/  (PNG frames)
-# → clips/    (MP4 วิดีโอ)
-```
-ใช้ `camera_poses.json` จาก Phase 1 render ฉาก Suzanne (monkey head) หลาย angle
-
----
-
-### Phase 3 — MotionCtrl Inference บน Kaggle (Daisy)
+### Phase 2 — MotionCtrl Inference บน Kaggle (Yoshi + Daisy)
 
 เปิด notebook `train-with-motionctrl.ipynb` บน Kaggle แล้วทำตามขั้นตอนนี้ก่อน:
 
@@ -96,10 +86,10 @@ python compare_video.py
 ```
 config.py                   — ค่า config ทุกอย่างรวมไว้ที่นี่ที่เดียว
 camera_math.py              — quaternion + SLERP logic (Nine)
-blender_render.py           — Blender automation (Yoshi)
-train-with-motionctrl.ipynb — MotionCtrl inference บน Kaggle (Daisy)
+train-with-motionctrl.ipynb — MotionCtrl inference บน Kaggle (Yoshi + Daisy)
 compare_video.py            — สร้าง comparison GIF (Rose)
 check_setup.py              — ตรวจสอบ environment
+blender_render.py           — Blender render (ไม่ได้ใช้ใน workflow หลัก)
 ```
 
 ---
