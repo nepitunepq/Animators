@@ -1,6 +1,6 @@
-# Animators — Orbital Camera Control with LoRA + MotionCtrl
+# Animators — Orbital Camera Control with MotionCtrl
 
-โปรเจกต์นี้ทดลองสอนให้ AI วิดีโอ (Wan 2.2) เรียนรู้การเคลื่อนกล้องแบบ orbital โดยใช้ quaternion + SLERP interpolation แล้วเปรียบเทียบกับ MotionCtrl
+โปรเจกต์นี้ใช้ MotionCtrl ควบคุมการเคลื่อนกล้องแบบ orbital โดยคำนวณ camera path ด้วย quaternion + SLERP interpolation แล้วเปรียบเทียบผลกับ Blender ground truth
 
 ## ทีม
 
@@ -8,7 +8,7 @@
 |---|---|---|
 | Nine | คำนวณ camera path (quaternion + SLERP) | `camera_math.py` |
 | Yoshi | render ฉากด้วย Blender | `blender_render.py` |
-| Daisy | เตรียม dataset + train LoRA | `dataset_prep.py`, `train_lora.py` |
+| Daisy | รัน MotionCtrl inference บน Kaggle | `train-with-motionctrl.ipynb` |
 | Rose | evaluate และ เปรียบเทียบผล | `compare_video.py` |
 
 ---
@@ -17,9 +17,8 @@
 
 | Phase | เครื่องที่ใช้ | GPU |
 |---|---|---|
-| camera math, dataset prep, compare | เครื่องตัวเอง | ไม่จำเป็น |
+| camera math, compare | เครื่องตัวเอง | ไม่จำเป็น |
 | Blender render | เครื่องตัวเอง | CPU ได้ (แต่ช้า) |
-| LoRA training | Kaggle / Colab | A100 หรือ T4 (T4 ใช้ Wan 2.1) |
 | MotionCtrl inference | Kaggle | GPU 16GB+ |
 
 ---
@@ -72,32 +71,7 @@ blender --background --python blender_render.py
 
 ---
 
-### Phase 3 — Dataset Prep (Daisy)
-```bash
-python dataset_prep.py
-# → wan-dataset/videos/   (MP4 resize แล้ว)
-# → wan-dataset/captions/ (text description)
-```
-Resize คลิปให้ตรงกับ resolution ที่ Wan รับ และสร้าง caption อัตโนมัติ
-
----
-
-### Phase 4A — LoRA Training บน Kaggle/Colab (Daisy)
-
-อัพโหลด `wan-dataset/` ขึ้น Kaggle Dataset แล้วรัน notebook `train_colab.ipynb`
-หรือรัน script ตรงๆ บนเครื่องที่มี A100:
-
-```bash
-python train_lora.py
-# → lora_output/  (LoRA weights)
-# ใช้เวลา ~3-5 ชม. บน A100
-```
-
-> **หมายเหตุ:** T4 (Colab free) รองรับแค่ Wan 2.1 — ดู `train_colab.ipynb`
-
----
-
-### Phase 4B — MotionCtrl Inference บน Kaggle (Yoshi/Daisy)
+### Phase 3 — MotionCtrl Inference บน Kaggle (Daisy)
 
 เปิด notebook `train-with-motionctrl.ipynb` บน Kaggle แล้วทำตามขั้นตอนนี้ก่อน:
 
@@ -123,10 +97,7 @@ python compare_video.py
 config.py                   — ค่า config ทุกอย่างรวมไว้ที่นี่ที่เดียว
 camera_math.py              — quaternion + SLERP logic (Nine)
 blender_render.py           — Blender automation (Yoshi)
-dataset_prep.py             — เตรียม dataset (Daisy)
-train_lora.py               — LoRA training script (Daisy)
-train_colab.ipynb           — notebook สำหรับ Colab T4 (Wan 2.1)
-train-with-motionctrl.ipynb — MotionCtrl inference บน Kaggle
+train-with-motionctrl.ipynb — MotionCtrl inference บน Kaggle (Daisy)
 compare_video.py            — สร้าง comparison GIF (Rose)
 check_setup.py              — ตรวจสอบ environment
 ```
