@@ -8,14 +8,12 @@ import subprocess
 from pathlib import Path
 from tqdm import tqdm
 
-from config import (
-    BLENDER_CLIPS,
-    DATASET_DIR,
-    TARGET_W,
-    TARGET_H,
-    OBJECT_NAME,
-    FPS,
-)
+BLENDER_CLIPS = "/kaggle/input/datasets/ravikanchayakul/blender"
+DATASET_DIR   = "/kaggle/working/Animators/wan-dataset"
+TARGET_W      = 480
+TARGET_H      = 288
+OBJECT_NAME   = "bunny"
+FPS           = 24
 
 def resize_video(src, dst, w, h):
     """Resize video ให้ตรง resolution ที่ Wan 2.2 ต้องการ"""
@@ -82,19 +80,13 @@ def prepare_dataset():
         caption = make_caption(clip.name)
         (captions_dir / (clip.stem + ".txt")).write_text(caption)
 
-        # 3. Flip augmentation
-        flip_name = clip.stem + "_flip.mp4"
-        flip_video(str(out_v), str(videos_dir / flip_name))
-        (captions_dir / (clip.stem + "_flip.txt")).write_text(caption)
-
         manifest.append({
             "id"      : i,
             "file"    : clip.name,
-            "flipped" : flip_name,
             "caption" : caption
         })
 
-    # 4. Save manifest
+    # Save manifest
     (Path(DATASET_DIR) / "manifest.json").write_text(
         json.dumps(manifest, indent=2)
     )
