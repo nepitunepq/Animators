@@ -96,7 +96,7 @@ def download_model():
     print("Downloading Wan 2.2 I2V 480P...")
     from huggingface_hub import snapshot_download
     snapshot_download(
-        repo_id="Wan-AI/Wan2.2-I2V-14B-480P",
+        repo_id="Wan-AI/Wan2.2-I2V-A14B-Diffuser",
         local_dir=MODEL_DIR,
         ignore_patterns=["*.bin"],
     )

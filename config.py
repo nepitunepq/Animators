@@ -5,24 +5,58 @@
 import os
 
 # ─────────────────────────────────────────────
-#  Paths
+#  Base
 # ─────────────────────────────────────────────
 
-BASE_DIR        = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Input
-BLENDER_CLIPS   = os.path.join(BASE_DIR, "blender_clips")      # Yoshi วาง clips ที่นี่
-REFERENCE_IMAGE = os.path.join(BASE_DIR, "reference_object.jpg")  # รูป object สำหรับ gen
+# ─────────────────────────────────────────────
+#  Paths — Nine (Math)
+# ─────────────────────────────────────────────
 
-# Outputs
+CAMERA_OUTPUT   = os.path.join(BASE_DIR, "camera_output")
+POSES_FILE      = os.path.join(CAMERA_OUTPUT, "camera_poses.json")
+MANIFEST_FILE   = os.path.join(CAMERA_OUTPUT, "dataset_manifest.json")
+
+# ─────────────────────────────────────────────
+#  Paths — Yoshi (Blender)
+# ─────────────────────────────────────────────
+
+RENDERS_DIR     = os.path.join(BASE_DIR, "renders")       # PNG frames จาก Blender
+CLIPS_DIR       = os.path.join(BASE_DIR, "clips")         # MP4 clips หลัง ffmpeg
+GROUND_TRUTH    = os.path.join(CLIPS_DIR, "ground_truth_orbit.mp4")
+
+# Blender settings
+BLENDER_OBJECT  = "Suzanne"   # monkey head — เปลี่ยนเป็น bunny ได้ถ้ามี .obj
+BLENDER_FPS     = 24
+BLENDER_RES_X   = 1920
+BLENDER_RES_Y   = 1080
+
+# ─────────────────────────────────────────────
+#  Paths — Daisy (Dataset + Training)
+# ─────────────────────────────────────────────
+
+BLENDER_CLIPS   = os.path.join(BASE_DIR, "clips")         # รับ clips จาก Yoshi
 DATASET_DIR     = os.path.join(BASE_DIR, "wan-dataset")
 LORA_OUTPUT     = os.path.join(BASE_DIR, "lora_output")
-FINAL_OUTPUT    = os.path.join(BASE_DIR, "outputs")
 MODEL_DIR       = os.path.join(BASE_DIR, "models", "wan2.2")
+REFERENCE_IMAGE = os.path.join(BASE_DIR, "camera_path.png")
 
-# Nine's files
-POSES_FILE      = os.path.join(BASE_DIR, "camera_poses.json")
-MANIFEST_FILE   = os.path.join(BASE_DIR, "dataset_manifest.json")
+# ─────────────────────────────────────────────
+#  Paths — Output videos
+# ─────────────────────────────────────────────
+
+FINAL_OUTPUT    = os.path.join(BASE_DIR, "outputs")
+VIDEO_A         = GROUND_TRUTH                                              # Blender
+VIDEO_B         = os.path.join(FINAL_OUTPUT, "ai_trained_output.mp4")      # AI trained
+VIDEO_C         = os.path.join(FINAL_OUTPUT, "ai_vanilla_output.mp4")      # AI vanilla
+COMPARISON_OUT  = os.path.join(FINAL_OUTPUT, "comparison_final.mp4")
+
+# ─────────────────────────────────────────────
+#  Paths — Rose (Evaluation)
+# ─────────────────────────────────────────────
+
+EVAL_OUTPUT     = os.path.join(BASE_DIR, "eval_results")
 
 # ─────────────────────────────────────────────
 #  Camera / Math (Nine)
@@ -46,16 +80,17 @@ OBJECT_NAME     = "bunny"
 # ─────────────────────────────────────────────
 #  LoRA Training (Daisy)
 # ─────────────────────────────────────────────
-
 LORA_RANK       = 16
 LORA_ALPHA      = 16
 LEARNING_RATE   = 1e-4
 MAX_STEPS       = 1500
-BATCH_SIZE      = 1
-GRAD_ACCUM      = 4
+BATCH_SIZE      = 1        # ต้องเป็น 1 เพราะ VRAM 8GB
+GRAD_ACCUM      = 8        # เพิ่มจาก 4 → 8 เพื่อชดเชย batch size
 SAVE_EVERY      = 250
 SEED            = 42
-NUM_FRAMES      = 81       # 81 frames @ 24fps = ~3 วินาที
+NUM_FRAMES      = 49       # ลดจาก 81 → 49 ประหยัด VRAM
+TARGET_W        = 480      # ลดจาก 832 → 480
+TARGET_H        = 288      # ลดจาก 480 → 288       # 81 frames @ 24fps = ~3 วินาที
 
 # ─────────────────────────────────────────────
 #  Generation (Daisy)
@@ -70,15 +105,3 @@ PROMPT = (
 GUIDANCE_SCALE      = 5.0
 INFERENCE_STEPS     = 25
 LORA_SCALE          = 0.85
-
-# ─────────────────────────────────────────────
-#  Evaluation (Rose)
-# ─────────────────────────────────────────────
-
-EVAL_OUTPUT     = os.path.join(BASE_DIR, "eval_results")
-
-# Videos to compare
-VIDEO_A         = os.path.join(FINAL_OUTPUT, "ground_truth_orbit.mp4")   # Yoshi (Blender)
-VIDEO_B         = os.path.join(FINAL_OUTPUT, "ai_trained_output.mp4")    # Daisy (trained)
-VIDEO_C         = os.path.join(FINAL_OUTPUT, "ai_vanilla_output.mp4")    # Daisy (vanilla)
-COMPARISON_OUT  = os.path.join(FINAL_OUTPUT, "comparison_final.mp4")
